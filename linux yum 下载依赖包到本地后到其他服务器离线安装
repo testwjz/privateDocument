@@ -1,0 +1,4 @@
+linux yum 下载依赖包到本地后到其他服务器离线安装
+
+一、本地yum 下载依赖包（yum install --downloadonly --downloaddir=路径 [依赖包名称]）
+二、上传本地依赖包到服务器，然后yum安装（yum localinstall -y --disablerepo=* 路径）（*后面加一个空格再加路径）
