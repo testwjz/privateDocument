@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="ant-jmeter-test" default="run" basedir=".">
+
+    <property environment="env"/>
+
+    <!-- 获取当前时间-->
+    <tstamp>
+        <format property="time" pattern="yyyyMMddhhmm" locale="zh" />
+    </tstamp>
+
+    <!-- 定义报告路径，根据自己项目名称定义，作为区分，如：DEMO-->
+    <property name="cordir" value="E:\Jmeter-report\DEMO\build-${env.BUILD_ID}" />
+
+    <!-- 定义本地jmeter目录-->  
+    <property name="jmeter.home" value="D:\apache-jmeter-5.1.1" />
+
+    <!-- jmeter生成jtl格式的结果报告的路径-->  
+    <property name="jmeter.result.jtl.dir" value="${cordir}\report" />
+    <!-- jmeter生成html格式的结果报告的路径-->
+    <property name="jmeter.result.html.dir" value="${cordir}\report" />
+
+    <!-- 生成的报告的前缀-->    
+    <property name="ReportName" value="TestReport" />
+    <property name="jmeter.result.jtlName" value="${env.WORKSPACE}/demo.jtl" />
+    <property name="jmeter.result.htmlName" value="${jmeter.result.html.dir}/${ReportName}.html" />
+    
+    <!-- 执行入口-->
+    <target name="run">
+	<antcall target="mkdir" />
+        <antcall target="test" />
+        <antcall target="report" />
+    </target>
+    
+    <!-- 创建目录，用于备份报告-->
+    <target name="mkdir">
+          <mkdir dir="${cordir}"/>
+    </target>
+    
+    <!--执行jmeter脚本-->
+    <target name="test">
+        <taskdef name="jmeter" classname="org.programmerplanet.ant.taskdefs.jmeter.JMeterTask" />
+        <jmeter jmeterhome="${jmeter.home}" resultlog="${jmeter.result.jtlName}">
+
+             <!-- 声明要运行的脚本-->
+            <testplans dir="${env.WORKSPACE}" includes="demo.jmx" />
+            <property name="jmeter.save.saveservice.output_format" value="xml"/>
+        </jmeter>
+    </target>
+    
+    <path id="xslt.classpath">
+        <fileset dir="${jmeter.home}/lib" includes="xalan*.jar"/>
+        <fileset dir="${jmeter.home}/lib" includes="serializer*.jar"/>
+    </path> 
+    
+    <!--将jtl文件生成html报告，使用自定义模板jmeter-results-report-loadtest.xsl-->
+    <target name="report">
+        <tstamp><format property="report.datestamp" pattern="yyyy/MM/dd HH:mm"/></tstamp>
+        <xslt 
+              classpathref="xslt.classpath"
+              force="true"
+              in="${jmeter.result.jtlName}"
+              out="${jmeter.result.htmlName}"
+              style="${jmeter.home}/extras/jmeter-results-report-loadtest.xsl">
+              <param name="dateReport" expression="${report.datestamp}"/>
+        </xslt>
+        <!-- 将生成的图片拷贝到备份路径中 --> 
+        <copy todir="${jmeter.result.html.dir}">
+            <fileset dir="${jmeter.home}/extras">
+                <include name="collapse.png" />
+                <include name="expand.png" />
+            </fileset>
+        </copy>
+        <!-- 报告拷贝到邮件发送路径中 -->
+        <copy todir="D:\Jenkins\workspace\Jmeter_Demo(5.1.1 Ant)用例执行失败自动发送邮件">
+            <fileset dir="${jmeter.result.html.dir}">
+                <include name="collapse.png" />
+                <include name="expand.png" />
+                <include name="${ReportName}.html" />
+            </fileset>
+        </copy>
+    </target>
+</project>
