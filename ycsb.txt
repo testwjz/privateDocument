@@ -1,0 +1,115 @@
+ycsb
+可以测试nosql性能，如mongodb、redis、elasticsearch等
+
+操作手册：
+https://github.com/brianfrankcooper/YCSB/wiki/Running-a-Workload
+https://github.com/brianfrankcooper/YCSB/wiki/Core-Properties
+
+
+1.1ycsb workload
+ycsb的workloads目录下保存了6种不同的workload类型，代表了不同的压测负载类型，详细的介绍列在下面：
+workloada：混合了50%的读和50%的写；
+workloadb：Read mostly workload，混合了95%的读和5%的写，该workload侧重于测试集群的读能力；
+workloadc：Read only，100%只读
+workloadd：Read latest workload，插入数据，接着就读取这些新插入的数据
+workloade：Short ranges，短范围scan，不同于随机读，每个测试线程都会去scan一段数据
+workloadf：Read-modiy-wirte，读改写，客户端读出一个记录，修改它并将被修改的记录返回
+
+
+1.2workload配置文件字段说明
+fieldcount: 每条记录字段个数 (default: 10)
+fieldlength: 每个字段长度 (default: 100)
+readallfields: 是否读取所有字段true或者读取一个字段false (default: true)
+readproportion: 读取作业比例 (default: 0.95)
+updateproportion: 更新作业比例 (default: 0.05)
+insertproportion: 插入作业比例 (default: 0)
+scanproportion: 扫描作业比例 (default: 0)
+readmodifywriteproportion: 读取一条记录修改它并写回的比例 (default: 0)
+requestdistribution: 请求的分布规则 uniform, zipfian or latest (default: uniform)
+maxscanlength: 扫描作业最大记录数 (default: 1000)
+scanlengthdistribution: 在1和最大扫描记录数的之间的分布规则 (default: uniform)
+insertorder: 记录被插入的规则ordered或者hashed (default: hashed)
+operationcount: 执行的操作数.
+maxexecutiontime: 执行操作的最长时间，当然如果没有超过这个时间以运行时间为主。
+table: 测试表的名称 (default: usertable)
+recordcount: 加载到数据库的纪录条数 (default: 0) 
+
+
+mysql
+
+1、创建库和表：
+CREATE TABLE usertable (
+	YCSB_KEY VARCHAR(255) PRIMARY KEY,
+	FIELD0 TEXT, FIELD1 TEXT,
+	FIELD2 TEXT, FIELD3 TEXT,
+	FIELD4 TEXT, FIELD5 TEXT,
+	FIELD6 TEXT, FIELD7 TEXT,
+	FIELD8 TEXT, FIELD9 TEXT
+);
+
+2、修改配置文件db.properties：
+db.driver=com.mysql.jdbc.Driver
+db.url=jdbc:mysql://192.168.0.10:4000/ycsb_test
+db.user=admin
+db.passwd=jJ5bo8RP4etF
+#db.batchsize=1000
+#jdbc.fetchsize=10
+#jdbc.autocommit=true
+#jdbc.batchupdateapi=false
+#db.batchsize=1000
+
+3、修改执行策略workloada/b/c/d/e/f：
+recordcount=10000000（存量数据1千万）
+operationcount=100000000（操作1亿数据）
+
+4、加载数据：
+sh bin/ycsb.sh load jdbc -P workloads/workloada -P jdbc-binding/conf/db.properties -threads 64 -s
+5、测试
+sh bin/ycsb.sh run jdbc -P workloads/workloada -P jdbc-binding/conf/db.properties -threads 64 -s
+
+
+
+
+mongodb
+1、构造数据
+sh bin/ycsb.sh load mongodb -s -P workloads/workloada -threads 128 -p mongodb.url=mongodb://mongouser:Lr87lvUf7lEO@192.168.0.7:27017,192.168.0.12:27017,192.168.0.2:27017/ycsb5?authSource=admin&replicaSet=cmgo-cbak2etr_0&w=0 -s
+
+sh bin/ycsb.sh load mongodb -s -P workloads/workloada -threads 128 -p mongodb.url=mongodb://mongouser:LPqHw0WTdO0x@192.168.1.128:27017,192.168.0.245:27017,192.168.0.253:27017/ycsb1?authSource=admin&replicaSet=cmgo-8cy74hqf_0&w=0 -s
+2、执行
+sh bin/ycsb.sh run mongodb -s -P workloads/workloada -threads 128 -p mongodb.url=mongodb://mongouser:Lr87lvUf7lEO@192.168.0.7:27017,192.168.0.12:27017,192.168.0.2:27017/ycsb5?authSource=admin&replicaSet=cmgo-cbak2etr_0&w=0 -s
+
+
+
+
+
+
+
+elasticsearch
+https://.....:9200/
+
+1、下载https://github.com/xosk31/YCSB
+2、下载安装maven3.8,进入ycsb目录进行打包：mvn -pl elasticsearch7 -am clean package
+3、新建索引：默认为es.ycsb
+4、新建myproperties.data配置文件，参考官方说明
+es.cluster.name=tj-es-staging
+es.index.name= middle_review_tes
+es.index.key=es.ycsb
+es.number_of_shards=3
+es.number_of_replicas=1
+es.remote=true
+es.newdb=false
+es.hosts.list=192.168.0.4:9200
+es.security.ssl=false
+es.security.ssl.path=changeme
+es.authentication=true
+es.credentials.user=elastic
+es.credentials.password=nhzgcIUduO8M
+
+5、装载数据：sh bin/ycsb.sh load elasticsearch7 -P workloads/workloada -threads 256 -P myproperties.data -s
+6、运行测试：sh bin/ycsb.sh run elasticsearch7 -P workloads/workloada -threads 256 -P myproperties.data -s
+
+
+
+
+
+

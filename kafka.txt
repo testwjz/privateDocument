@@ -1,0 +1,7 @@
+1、下载kafka 安装包
+
+2、进入安装包路径执行如下命令，进行生产者测试
+sh bin/kafka-producer-perf-test.sh --topic test_perf --num-records 100000 --record-size 1000  --throughput 10000 --producer-props bootstrap.servers=192.168.0.157:9092
+
+3、消费测试
+sh bin/kafka-consumer-perf-test.sh --broker-list 192.168.0.157:9092 --topic test_perf --fetch-size 1048576 --messages 100000 --threads 1

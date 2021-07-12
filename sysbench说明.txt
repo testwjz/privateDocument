@@ -1,0 +1,92 @@
+环境说明：
+
+Hayproxy
+172.16.0.10
+
+TIDB、PD
+172.16.0.23,172.16.0.24,172.16.32.32
+
+TIKV
+172.16.0.18,172.16.0.19,172.16.0.20
+root  whitedgg962540@@@
+
+外网访问（负载机）
+106.12.132.87:6537
+admin
+
+SpDggTdb3539..
+
+172.16.0.18，使用tiup方式重启tidb
+
+su - tidb
+tiup cluster restart shupian-tidb
+
+
+1、安装
+curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
+sudo yum -y install sysbench
+
+2、配置tidb
+set global tidb_disable_txn_auto_retry = off;
+
+
+3、创建表：
+create database sbtest;
+
+4、添加config文件，内容如下
+mysql-host=192.168.254.102
+mysql-port=5166
+mysql-user=admin
+mysql-password=admindgg
+mysql-db=sbtest
+time=600
+threads=16
+report-interval=10
+db-driver=mysql
+
+5、创建表和构造数据（table-size代表数据条数）
+首先修改oltp_common.lua:将第235行到第240行移动到第/usr/share/sysbench/oltp_common.lua198行之后。
+sysbench --config-file=config oltp_point_select --tables=16 --table-size=10000000 prepare
+
+6、预热数据，使测试更准确
+ANALYZE TABLE sbtest1;
+ANALYZE TABLE sbtest2;
+ANALYZE TABLE sbtest3;
+ANALYZE TABLE sbtest4;
+ANALYZE TABLE sbtest5;
+ANALYZE TABLE sbtest6;
+ANALYZE TABLE sbtest7;
+ANALYZE TABLE sbtest8;
+ANALYZE TABLE sbtest9;
+ANALYZE TABLE sbtest10;
+ANALYZE TABLE sbtest11;
+ANALYZE TABLE sbtest12;
+ANALYZE TABLE sbtest13;
+ANALYZE TABLE sbtest14;
+ANALYZE TABLE sbtest15;
+ANALYZE TABLE sbtest16;
+
+7、执行测试
+TIDB：用oltp_read_write测试数据库的综合读写性能
+sysbench --config-file=config oltp_read_write --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_point_select 测试数据库查询性能
+sysbench --config-file=config oltp_point_select --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_update_non_index测试数据库非索引更新
+sysbench --config-file=config oltp_update_non_index --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_read_only测试数据库的只读性能
+sysbench --config-file=config oltp_read_only --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_delete测试数据库的删除性能
+sysbench --config-file=config oltp_delete --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_update_index测试数据库的更新索引字段的性能
+sysbench --config-file=config oltp_update_index --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_insert测试数据库的插入性能
+sysbench --config-file=config oltp_insert --tables=16 --table-size=10000000 run
+
+TIDB：用oltp_write_only测试数据库的写入性能
+sysbench --config-file=config oltp_write_only --tables=16 --table-size=10000000 run
