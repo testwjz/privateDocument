@@ -1,0 +1,6 @@
+export proxy="http://172.16.129.239:7890"
+#export proxy="socks5://172.16.133.243:1080"
+export {HTTP,HTTPS}_PROXY=$proxy
+export {http,https}_proxy=$proxy
+export {ftp_proxy,FTP_PROXY}=$proxy
+export {NO_PROXY,no_proxy}=localhost,127.0.0.1,::1,10.*.*.*,192.168.*.*,172.16.*.*,*.local
